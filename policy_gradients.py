@@ -12,7 +12,7 @@ from keras import backend as K
 import random
 from collections import namedtuple
 
-Experience = namedtuple("Experience", field_names=["states", "action", "reward", "next_states", "done"])
+Experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
 
 class ReplayBuffer:
     """Fixed-size circular buffer to store experience tuples."""
@@ -74,7 +74,6 @@ class Actor:
     """Actor (Policy) Model."""
     def __init__(self, state_size, action_size, action_low, action_high):
         """Initialize parameters and build model.
-
         Params
         ======
             state_size (int): Dimension of each state
@@ -133,7 +132,6 @@ class Critic:
 
     def __init__(self, state_size, action_size):
         """Initialize parameters and build model.
-
         Params
         ======
             state_size (int): Dimension of each state
@@ -154,7 +152,7 @@ class Critic:
 
         # Add hideen layers for state pathway
         net_states = layers.Dense(units=32, activation='relu')(states)
-        net_states = layers.Dense(units=64, activation='relue')(net_states)
+        net_states = layers.Dense(units=64, activation='relu')(net_states)
 
         # Add hidden layers for action pathway
         net_actions = layers.Dense(units=32, activation='relu')(actions)
@@ -191,7 +189,7 @@ class Critic:
 
 class DDPG(BaseAgent):
     """Reinforcement Learning agent that learns using DDPG."""
-    def __int__(self, task):
+    def __init__(self, task):
         # Task (environment) information
         self.task = task  # should contain observation_space and action_space
         self.state_size = 3  # position only
@@ -262,7 +260,7 @@ class DDPG(BaseAgent):
             self.count += 1
             self.total_reward += reward
 
-        if len(self.memeory) > self.batch_size:
+        if len(self.memory) > self.batch_size:
             experiences = self.memory.sample(self.batch_size)
             self.learn(experiences)
 
@@ -293,7 +291,7 @@ class DDPG(BaseAgent):
         # Get predicted next-state actions and Q values from target models
         #     Q_targets_next = critic_target(next_state, actor_target(next_state))
         actions_next= self.actor_target.model.predict_on_batch(next_states)
-        Q_targets_next = self.critic_target.model.predict_on_batch(next_states, actions_next)
+        Q_targets_next = self.critic_target.model.predict_on_batch([next_states, actions_next])
 
         Q_targets = rewards + self.gamma*Q_targets_next*(1-dones)
         self.critic_local.model.train_on_batch(x=[states, actions], y=Q_targets)
@@ -315,7 +313,6 @@ class DDPG(BaseAgent):
 
 ''' 
 import pandas as pd
-
 df_stats = pd.read_csv(<CSV filename>)
 df_stats[['total_reward']].plot(title="Episode Rewards")
 '''
